@@ -11,13 +11,13 @@ WebSocketsClient webSocket;
 
 #define USE_SSL false  // Set to true if your Node.js server uses SSL/TLS
 
-// Replace with your WiFi credentials
-const char* ssid = "wifi name";
-const char* password = "wifi password";
+// WiFi credentials
+const char* ssid = "chrisc";
+const char* password = "12345678";
 
 // Node.js server details
-#define WS_SERVER "192.168.0.1"  // IP ADDRESS
-#define WS_PORT 8080  // Node.js server port
+#define WS_SERVER "ip adress"  // Replace with the IP of your Node.js server
+#define WS_PORT 8080  // Replace with your Node.js server port
 
 bool alreadyConnected = false;
 
@@ -35,8 +35,6 @@ void webSocketEvent(const WStype_t& type, uint8_t *payload, const size_t& length
       alreadyConnected = true;
       Serial.print("[WSc] Connected to server: ");
       Serial.println((char*)payload);
-      // Send a message upon connecting
-      webSocket.sendTXT("Hello from ESP32!");
       break;
 
     case WStype_TEXT:
@@ -53,9 +51,8 @@ void webSocketEvent(const WStype_t& type, uint8_t *payload, const size_t& length
 }
 
 void setup() {
-  // Initialize Serial for debugging
   Serial.begin(115200);
-  while (!Serial) delay(10); // Wait for Serial connection
+  while (!Serial) delay(10);
 
   Serial.println("\nStarting ESP32 WebSocket Client...");
 
@@ -68,6 +65,8 @@ void setup() {
   Serial.println("\nWiFi connected.");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  Serial.print("Node website adress: localhost:");
+  Serial.println(WS_PORT);
 
   // Connect to WebSocket server
 #if USE_SSL
@@ -79,23 +78,21 @@ void setup() {
   // Attach event handler
   webSocket.onEvent(webSocketEvent);
 
-  // Reconnect every 5 seconds if connection fails
+  // Reconnect every 5 seconds 
   webSocket.setReconnectInterval(5000);
 
   Serial.println("WebSocket setup complete.");
 }
 
 void loop() {
-  // Maintain WebSocket connection
   webSocket.loop();
 
-  // Send a message every 5 seconds
   static unsigned long lastTime = 0;
   if (millis() - lastTime > 5000) {
     lastTime = millis();
     if (alreadyConnected) {
-      webSocket.sendTXT("ESP32 says hello!");
-      Serial.println("[WSc] Sent: ESP32 says hello!");
+      webSocket.sendTXT("1");
+      Serial.println("[WSc] Sent: 1");
     }
   }
 }
