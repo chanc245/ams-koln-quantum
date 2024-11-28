@@ -2,47 +2,36 @@
 #include <WiFiMulti.h>
 #include <WebSocketsClient_Generic.h>
 
-#if !defined(ESP32)
-  #error This code is intended to run only on the ESP32 boards! Please check your Tools->Board setting.
-#endif
-
 WiFiMulti WiFiMulti;
 WebSocketsClient webSocket;
 
-#define USE_SSL false  // Set to true if your Node.js server uses SSL/TLS
-
-// WiFi credentials
+// WiFi and WebSocket details
 const char* ssid = "chrisc";
 const char* password = "12345678";
-
-// Node.js server details
-#define WS_SERVER "ip adress"  // Replace with the IP of your Node.js server
-#define WS_PORT 8080  // Replace with your Node.js server port
+#define WS_SERVER "ip"
+#define WS_PORT 8080
 
 bool alreadyConnected = false;
 
-// WebSocket event handler
-void webSocketEvent(const WStype_t& type, uint8_t *payload, const size_t& length) {
+// Initialize Serial2 for Arduino communication
+#define RX2 16
+#define TX2 17
+
+void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
-      if (alreadyConnected) {
-        Serial.println("[WSc] Disconnected!");
-        alreadyConnected = false;
-      }
+      Serial.println("[WSc] Disconnected!");
+      alreadyConnected = false;
       break;
 
     case WStype_CONNECTED:
-      alreadyConnected = true;
       Serial.print("[WSc] Connected to server: ");
       Serial.println((char*)payload);
+      alreadyConnected = true;
       break;
 
     case WStype_TEXT:
       Serial.printf("[WSc] Received message: %s\n", payload);
-      break;
-
-    case WStype_BIN:
-      Serial.printf("[WSc] Received binary message of length: %u\n", length);
       break;
 
     default:
@@ -51,12 +40,11 @@ void webSocketEvent(const WStype_t& type, uint8_t *payload, const size_t& length
 }
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) delay(10);
+  Serial.begin(115200); // Debug Serial
+  Serial2.begin(115200, SERIAL_8N1, RX2, TX2); // Setup Serial2 for Arduino communication
+//  Serial.println("Serial2 initialized for Arduino communication.");
 
-  Serial.println("\nStarting ESP32 WebSocket Client...");
-
-  // Connect to WiFi
+  // WiFi setup
   WiFiMulti.addAP(ssid, password);
   while (WiFiMulti.run() != WL_CONNECTED) {
     Serial.print(".");
@@ -65,34 +53,53 @@ void setup() {
   Serial.println("\nWiFi connected.");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  Serial.print("Node website adress: localhost:");
-  Serial.println(WS_PORT);
 
-  // Connect to WebSocket server
-#if USE_SSL
-  webSocket.beginSSL(WS_SERVER, WS_PORT, "/");
-#else
+  // WebSocket setup
   webSocket.begin(WS_SERVER, WS_PORT, "/");
-#endif
-
-  // Attach event handler
   webSocket.onEvent(webSocketEvent);
-
-  // Reconnect every 5 seconds 
   webSocket.setReconnectInterval(5000);
-
-  Serial.println("WebSocket setup complete.");
 }
 
 void loop() {
   webSocket.loop();
 
+  // Read messages from Arduino
+  if (Serial2.available()) {
+    String arduinoMessage = Serial2.readStringUntil('\n'); // Read message until newline
+    arduinoMessage.trim(); // Remove any leading/trailing whitespace or control characters
+
+    // Debug raw and trimmed input
+//    Serial.print("Raw message from Arduino: '");
+//    Serial.print(arduinoMessage);
+//    Serial.println("'");
+
+    // Validate the message: Only accept single-digit numbers
+    if (arduinoMessage.length() == 1 && isdigit(arduinoMessage[0])) {
+      Serial.print("msg from Arduino: ");
+      Serial.println(arduinoMessage);
+
+      // Example: Send the number to WebSocket server
+      if (alreadyConnected) {
+        webSocket.sendTXT(arduinoMessage);
+      }
+    } else {
+      Serial.println("Invalid message received. Ignoring.");
+    }
+
+    // Clear the serial buffer
+    Serial2.flush();
+  }
+
+  // Example: Send data to the WebSocket server periodically
   static unsigned long lastTime = 0;
+  static String lastArduinoMessage = ""; // Store the last received single-digit number
+
   if (millis() - lastTime > 5000) {
     lastTime = millis();
-    if (alreadyConnected) {
-      webSocket.sendTXT("1");
-      Serial.println("[WSc] Sent: 1");
+    if (alreadyConnected && lastArduinoMessage.length() == 1) {
+      webSocket.sendTXT("Arduino Message: " + lastArduinoMessage);
+      Serial.println("[WSc] Sent: " + lastArduinoMessage);
     }
   }
+
 }

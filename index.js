@@ -35,12 +35,45 @@ wss.on("connection", (ws) => {
   ws.on("message", (message) => {
     console.log(`Received: ${message}`);
 
+    // 1_tech, 2_mys, 3_pod
     if (message.toString() === "1") {
       if (!isAudioPlaying) {
         console.log("Playing audio...");
         isAudioPlaying = true;
 
-        player.play("./audio/audio_test2.mp3", (err) => {
+        player.play("./audio/1_tech.mp3", (err) => {
+          if (err) {
+            console.error("Error playing audio:", err);
+          } else {
+            console.log("Audio finished playing.");
+          }
+          isAudioPlaying = false;
+        });
+      } else {
+        console.log("Audio is already playing. Ignoring request.");
+      }
+    } else if (message.toString() === "2") {
+      if (!isAudioPlaying) {
+        console.log("Playing audio...");
+        isAudioPlaying = true;
+
+        player.play("./audio/2_mys.mp3", (err) => {
+          if (err) {
+            console.error("Error playing audio:", err);
+          } else {
+            console.log("Audio finished playing.");
+          }
+          isAudioPlaying = false;
+        });
+      } else {
+        console.log("Audio is already playing. Ignoring request.");
+      }
+    } else if (message.toString() === "3") {
+      if (!isAudioPlaying) {
+        console.log("Playing audio...");
+        isAudioPlaying = true;
+
+        player.play("./audio/3_pod.mp3", (err) => {
           if (err) {
             console.error("Error playing audio:", err);
           } else {
