@@ -8,7 +8,7 @@ WebSocketsClient webSocket;
 // WiFi and WebSocket details
 const char* ssid = "chrisc";
 const char* password = "12345678";
-#define WS_SERVER "ip"
+#define WS_SERVER "Your_computer_IP"
 #define WS_PORT 8080
 
 bool alreadyConnected = false;
