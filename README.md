@@ -1,4 +1,4 @@
-# gates & states
+# [gates & states]
 
 This is the GitHub repository for the code used in the [\[gates & states\]](https://howtoshowoffquantumcomputing.cargo.site/%5Bgates-states%5D) project, part of the DLR x KSID x Parsons collaboration project — [How to Show Off Quantum Computing?](https://howtoshowoffquantumcomputing.cargo.site/)
 
